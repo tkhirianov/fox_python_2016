@@ -1,12 +1,18 @@
 #-*- coding: utf-8 -*
 import robot
 r = robot.rmap()
-r.loadmap('task3-1')
+r.loadmap('task3-5')
 def task():
     pass
     #------- пишите код здесь -----
-    if r.freeRight():
-        r.right()
+    r.up()
+    wall_up = r.wallUp()
+    r.down()
+    r.down()
+    wall_down = r.wallDown()
+    r.up()
+    if wall_up and wall_down:
+        r.paint()
     #------- пишите код здесь -----
 r.start(task)
 
