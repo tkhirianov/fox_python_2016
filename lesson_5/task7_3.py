@@ -1,16 +1,32 @@
 #-*- coding: utf-8 -*
 import robot
 r = robot.rmap()
-r.loadmap('task7-1')
+r.loadmap('task7-3')
 def task():
     pass
     #------- пишите код здесь -----
-    a = 0
+    steps_down = 0
     while r.freeDown():
         r.down()
-        a += 1
-        r.settext(a)
+        steps_down += 1
+        r.settext(steps_down)
+
+    # обойдём стену справа:
+    steps_right = 0
+    while r.wallDown():
+        r.right()
+        steps_right += 1
+        r.settext(steps_right)
+    r.down()
+    for i in range(steps_right):
+        r.left()
+        r.settext(i+1)
+    # а теперь вниз steps_down раз
+    for i in range(steps_down):
+        r.down()
+        r.settext(i+1)
     #------- пишите код здесь -----
+        
 r.start(task)
 
 #Отступ слева (tab) сохранять!

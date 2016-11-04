@@ -1,15 +1,18 @@
 #-*- coding: utf-8 -*
 import robot
 r = robot.rmap()
-r.loadmap('task7-1')
+r.loadmap('task7-2')
 def task():
     pass
     #------- пишите код здесь -----
-    a = 0
+    step_number = 0
     while r.freeDown():
         r.down()
-        a += 1
-        r.settext(a)
+        step_number += 1
+    r.paint()
+    # а теперь наверх step_number раз
+    for i in range(step_number):
+        r.up()
     #------- пишите код здесь -----
 r.start(task)
 
