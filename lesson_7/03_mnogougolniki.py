@@ -5,6 +5,7 @@ def init():
     shapesize(2)
     color('black', 'darkgreen')
     width(3)
+    speed(10)
     penup()
     backward(300)
 
