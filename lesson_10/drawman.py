@@ -39,7 +39,7 @@ def init_drawman():
     """ Инициализация Чертёжника """
     clear()
     penup()
-    speed(100)
+    speed(1000)
     draw_coords_web()
     draw_axis()
     color('blue')

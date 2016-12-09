@@ -1,7 +1,7 @@
 from drawman import *
 
 colours = ['red', 'green', 'blue']*5
-back_colours = ['red', 'green', 'blue']*5
+back_colours = ['pink', 'lightgreen', 'lightblue']*5
 
 init_drawman()
 for i in range(10, 0, -1):
