@@ -24,17 +24,30 @@ class MainWindow:
         self.toolbar_images = []
         toolbar = tkinter.Frame(frame)
 
-        image = tkinter.PhotoImage(file=image)
-        self.toolbar_images.append(image)
+        for image, command in (
+                ("filenew.gif", self.fileNew),
+                ("fileopen.gif", self.fileOpen),
+                ("filesave.gif", self.fileSave)):
+            image = tkinter.PhotoImage(file=image)
+            self.toolbar_images.append(image)
+            button = tkinter.Button(toolbar, image=image, command=command)
+            button.grid(row=0, column=len(self.toolbar_images)-1)
 
-    def fileNew(self):
-        pass
+        toolbar.pack()
+        frame.pack()
 
-    def fileOpen(self):
-        pass
+        scrollbar = tkinter.Scrollbar(frame, orient=tkinter.VERTICAL)
+        self.listBox = tkinter.Listbox(frame, yscrollcommand=scrollbar.set)
+        self.listBox.grid(row=1, column=0, sticky=tkinter.NSEW)
 
-    def fileSave(self):
-        pass
+    def fileNew(self, *ignore):
+        print('New File!')
+
+    def fileOpen(self, *ignore):
+        print('Open File!')
+
+    def fileSave(self, *ignore):
+        print('Save File!')
 
 
 def main():
