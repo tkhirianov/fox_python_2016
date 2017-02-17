@@ -33,12 +33,18 @@ class MainWindow:
             button = tkinter.Button(toolbar, image=image, command=command)
             button.grid(row=0, column=len(self.toolbar_images)-1)
 
-        toolbar.pack()
-        frame.pack()
+        toolbar.grid(row=0, column=0, columnspan=2, sticky=tkinter.NW)
 
         scrollbar = tkinter.Scrollbar(frame, orient=tkinter.VERTICAL)
         self.listBox = tkinter.Listbox(frame, yscrollcommand=scrollbar.set)
         self.listBox.grid(row=1, column=0, sticky=tkinter.NSEW)
+        self.listBox.focus_set()
+        scrollbar["command"] = self.listBox.yview
+        scrollbar.grid(row=1, column=1, sticky=tkinter.NS)
+
+
+        frame.pack()
+
 
     def fileNew(self, *ignore):
         print('New File!')
