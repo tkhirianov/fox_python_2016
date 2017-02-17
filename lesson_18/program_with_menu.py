@@ -42,19 +42,27 @@ class MainWindow:
         scrollbar["command"] = self.listBox.yview
         scrollbar.grid(row=1, column=1, sticky=tkinter.NS)
 
+        self.statusbar = tkinter.Label(frame, text="Готов...", anchor=tkinter.W)
+        self.statusbar.after(5000, self.clearStatusBar)
+        self.statusbar.grid(row=2, column=0, columnspan=2, sticky=tkinter.EW)
 
-        frame.pack()
-
+        frame.grid(row=0, column=0, sticky=tkinter.NSEW)
 
     def fileNew(self, *ignore):
-        print('New File!')
+        self.set_status('New File!')
 
     def fileOpen(self, *ignore):
-        print('Open File!')
+        self.set_status('Open File!')
 
     def fileSave(self, *ignore):
-        print('Save File!')
+        self.set_status('Save File!')
 
+    def clearStatusBar(self, *ignore):
+        self.statusbar["text"] = ""
+
+    def set_status(self, text, timeout=5000):
+        self.statusbar["text"] = text
+        self.statusbar.after(timeout, self.clearStatusBar)
 
 def main():
     root = tkinter.Tk()
