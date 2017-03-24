@@ -1,5 +1,7 @@
+from math import *
 from tkinter import *
 from random import *
+from enum import Enum
 
 screen_width = 600
 screen_height = 400
@@ -13,6 +15,7 @@ default_target_born_time = 5  # секунд
 scores_format = 'очки: %d'
 players_number = 2
 
+
 def screen(physical_x, physical_y):
     screen_x = physical_x
     screen_y = screen_height - physical_y
@@ -23,6 +26,11 @@ def physical(screen_x, screen_y):
     physical_x = screen_x
     physical_y = screen_height - screen_y
     return physical_x, physical_y
+
+
+class GameState(Enum):
+    TANK_IS_AIMING = 1
+    SHELL_IS_FLYING = 2
 
 
 class MainWindow:
@@ -44,11 +52,13 @@ class MainWindow:
         self.scores = 0
         #self.scores_text = canvas.create_text(screen_width - 50, 10,
         #                                      text=scores_format%self.scores)
-        self.game_cycle()  # запуск игрового цикла
         canvas.bind("<Button-1>", self.mouse_click)
         canvas.bind("<Motion>", self.mouse_motion)
+        self.game_state = GameState.TANK_IS_AIMING
 
     def mouse_motion(self, event):
+        if self.game_state != GameState.TANK_IS_AIMING:
+            return  # ничего не делаем
         tank = self.tanks[self.current_player]
         x, y = physical(event.x, event.y)
         tank.aim(x, y)
@@ -57,21 +67,35 @@ class MainWindow:
         """ Проверяем, далеко ли шарик, и, если в него попали, то "лопаем" его,
             создаём новый шарик, а за старый начисляем очки.
         """
+        if self.game_state != GameState.TANK_IS_AIMING:
+            return  # ничего не делаем
         tank = self.tanks[self.current_player]
         x, y = physical(event.x, event.y)
         tank.aim(x, y)
         shell = tank.shoot(x, y)
         self.shells.append(shell)
+        # смена состояния игры - танки замирают на время полёта снаряда
+        self.game_state = GameState.SHELL_IS_FLYING
+        canvas.after(sleep_time, self.shell_flying)  # запуск полёта снаряда
         # смена игрока по кругу
         self.current_player = (self.current_player + 1)%players_number
 
-    def game_cycle(self, *ignore):
-        canvas.after(sleep_time, self.game_cycle)  # перезапуск цикла
+    def shell_flying(self, *ignore):
+        if self.game_state != GameState.SHELL_IS_FLYING:
+            return  # ничего не делаем
+
+        canvas.after(sleep_time, self.shell_flying)  # перезапуск цикла
 
         # смещаем цели и снаряды
         for shell in self.shells:
             shell.move()
-        # для каждой цели проверяем столкновение со снарядом
+        # проверяем столкновение снаряда с землёй
+        for shell in self.shells:
+            if self.terra.check_contact(shell):
+                self.terra.excavate(shell)
+                self.game_state = GameState.TANK_IS_AIMING
+        if self.game_state != GameState.SHELL_IS_FLYING:
+            self.shells.clear()  # Убираем все снаряды, если хотя бы один взорвался
 
 
 class Ball:
@@ -99,13 +123,13 @@ class Ball:
         # отражения слева, справа, снизу
         if self.x - self.r <= 0:
             self.Vx = -self.Vx
-            self.x = self.r+1
+            self.x = self.r + 1
         if self.x + self.r >= screen_width:
             self.Vx = -self.Vx
             self.x = screen_width - self.r - 1
-        if self.y + self.r >= screen_height:
+        if self.y + self.r <= 0:
             self.Vy = -self.Vy
-            self.y = screen_height - self.r - 1
+            self.y = self.r + 1
 
         x1, y1 = screen(self.x-self.r, self.y-self.r)
         x2, y2 = screen(self.x+self.r, self.y+self.r)
@@ -156,17 +180,38 @@ class Tank:
 
 class Terra:
     def __init__(self):
-        self.y = [100]*screen_width
+        self.y = [(1.6-sin(4*x/screen_width))*70 for x in range(screen_width)]
         self.avatar = [canvas.create_line(screen(x, 0), screen(x, self.y[x]))
                        for x in range(screen_width)]
 
     def check_contact(self, shell):
         """ True если снаряд касается земли"""
-        pass #FIXME
+        terra_level = self.y[round(shell.x)]
+        if shell.y <= terra_level:
+            return True
 
     def excavate(self, shell):
         """ Уничтожает часть земли, задетой взрывом снаряда"""
-        pass #FIXME
+        print("Тут должна взорваться земля")
+        x_min = max(0, round(shell.x - shell.damage_radius+1))
+        x_max = min(screen_width - 1, round(shell.x + shell.damage_radius-1))
+        r = shell.damage_radius
+        for x in range(x_min, x_max):
+            dx = x - shell.x
+            dy = (r**2 - dx**2)**0.5
+            y1 = round(shell.y - dy)
+            y2 = round(shell.y + dy)
+            terra_above = max(self.y[x] - y2, 0)
+            self.y[x] = min(self.y[x], y1 + terra_above)
+        self.redraw()
+        shell.destroy()
+
+    def redraw(self):
+        for x in range(screen_width):
+            x1, y1 = screen(x, 0)
+            x2, y2 = screen(x, self.y[x])
+            canvas.coords(self.avatar[x], x1, y1, x2, y2)
+
 
 root_window = Tk()
 #ball_sprite = PhotoImage(file=ball_sprite_filename)
