@@ -68,10 +68,23 @@ class MainWindow:
         for ball in self.balls:
             ball.move()
         # проверяем столкновение снаряда с платформой
-        if self.platform.check_collision(ball):
-            ball.Vy = -ball.Vy  # отражение от платформы
+        for ball in self.balls:
+            if self.platform.check_collision(ball):
+                ball.Vy = -ball.Vy  # отражение от платформы
         # проверяем столкновение снаряда с блоками
-        # FIXME
+        for ball in self.balls:
+            xi = round(ball.x)//brick_width
+            yi = round(ball.y)//brick_height
+            if yi >= bricks_vertical_number:
+                print('GAME OVER!')
+                self.game_state = GameState.GAME_OVER
+                return
+            if xi >= bricks_horizontal_number:
+                xi = bricks_horizontal_number - 1
+            if self.bricks.matrix[yi][xi] is not None:
+                self.bricks.matrix[yi][xi] = None
+                avatar = self.bricks.avatars[yi][xi]
+                canvas.delete(avatar)
 
 
 class Ball:
