@@ -3,15 +3,16 @@ from tkinter import *
 from random import *
 from enum import Enum
 
-blocks_horizontal_number = 20
-blocks_vertical_number = 40
-block_width = 30
-block_height = 10
-screen_width = block_width*blocks_horizontal_number
-screen_height = block_height*blocks_vertical_number
+level1_file = 'level1.txt'
+bricks_horizontal_number = 10
+bricks_vertical_number = 20
+brick_width = 60
+brick_height = 20
+screen_width = brick_width * bricks_horizontal_number
+screen_height = brick_height*bricks_vertical_number
 
 dt = 0.1  # физический шаг времени между кадрами обсчёта
-fps = 20  # количество кадров в секунду
+fps = 50  # количество кадров в секунду
 sleep_time = round(1000/fps)
 #ball_sprite_filename = "ball_sprite.png"
 scores_format = 'очки: %d'
@@ -31,16 +32,17 @@ class MainWindow:
         canvas["height"] = screen_height
         canvas.pack()
 
-        self.blocks = []
+        self.bricks = Bricks(level1_file)
         self.platform = Platform()
         self.balls = [Ball(self.platform.x, screen_height - self.platform.height - 5,
-                           5, 10, -10, 'green')]
+                           5, 20, -20, 'green')]
         self.scores = 0
         self.scores_text = canvas.create_text(screen_width - 50, 10,
                                               text=scores_format%self.scores)
         canvas.bind("<Button-1>", self.mouse_click)
         canvas.bind("<Motion>", self.mouse_motion)
         self.game_state = GameState.BALL_IS_FLYING
+        canvas.after(sleep_time, self.ball_flying)  # запуск цикла для полёта
 
     def mouse_motion(self, event):
         if self.game_state == GameState.GAME_OVER:
@@ -56,17 +58,18 @@ class MainWindow:
             return  # ничего не делаем
         #platform.shoot(x, y)
 
-    def shell_flying(self, *ignore):
-        if self.game_state != GameState.SHELL_IS_FLYING:
+    def ball_flying(self, *ignore):
+        if self.game_state != GameState.BALL_IS_FLYING:
             return  # ничего не делаем
 
-        canvas.after(sleep_time, self.shell_flying)  # перезапуск цикла
+        canvas.after(sleep_time, self.ball_flying)  # перезапуск цикла
 
         # смещаем цели и снаряды
         for ball in self.balls:
             ball.move()
         # проверяем столкновение снаряда с платформой
-        # FIXME
+        if self.platform.check_collision(ball):
+            ball.Vy = -ball.Vy  # отражение от платформы
         # проверяем столкновение снаряда с блоками
         # FIXME
 
@@ -96,7 +99,7 @@ class Ball:
         if self.x + self.r >= screen_width:
             self.Vx = -self.Vx
             self.x = screen_width - self.r - 1
-        if self.y + self.r <= 0:
+        if self.y - self.r <= 0:
             self.Vy = -self.Vy
             self.y = self.r + 1
 
@@ -106,14 +109,14 @@ class Ball:
 
 
 class Platform:
-    default_width = 40
-    height = 9
+    default_width = 80
+    height = 15
 
     def __init__(self):
         self.x = screen_width//2
         self.width = Platform.default_width
-        self.line = canvas.create_line(self.x-self.width//2, screen_height-5,
-                                       self.x+self.width//2, screen_height-5,
+        self.line = canvas.create_line(self.x-self.width//2, screen_height-Platform.height//2,
+                                       self.x+self.width//2, screen_height-Platform.height//2,
                                        width=Platform.height, fill='brown')
 
     def aim(self, x, y):
@@ -129,6 +132,30 @@ class Platform:
 
     def shoot(self, x, y):
         pass  #FIXME  необходимо только для 1-го этапа игры, когда мячик отстреливается от платформы
+
+    def check_collision(self, ball):
+        return (-self.width//2 <= (ball.x - self.x) <= +self.width//2 and
+                ball.y + ball.r >= screen_height - self.height and ball.Vy > 0)
+
+
+class Bricks:
+    color = {'r': 'red', 'g': 'green', 'b': 'blue', 'y': 'yellow', ' ': None}
+
+    def __init__(self, level_file):
+        """ загружает схему кирпичей уровня из файла """
+        with open(level_file) as file:
+            self.matrix = [[None]*bricks_horizontal_number for i in range(bricks_vertical_number)]
+            self.avatars = [[None]*bricks_horizontal_number for i in range(bricks_vertical_number)]
+            for yi in range(bricks_vertical_number):
+                line = file.readline().rstrip()
+                line += ' '*(bricks_horizontal_number - len(line))
+                for xi in range(bricks_horizontal_number):
+                    color = Bricks.color[line[xi]]
+                    if color is not None:
+                        self.matrix[yi][xi] = color
+                        self.avatars[yi][xi] = canvas.create_rectangle(xi*brick_width, yi*brick_height,
+                                                                       (xi+1)*brick_width, (yi+1)*brick_height,
+                                                                       fill=color)
 
 
 root_window = Tk()
