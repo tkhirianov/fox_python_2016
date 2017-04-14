@@ -1,14 +1,16 @@
 import tkinter
 from enum import Enum
 
-cells_horizontal_number = 30
-cells_vertical_number = 30
-cell_width = cell_height = 20
+cells_horizontal_number = 60
+cells_vertical_number = 60
+cell_width = cell_height = 8
 screen_width = cell_width*cells_horizontal_number
 screen_height = cell_height*cells_vertical_number
 
-fps = 1  # количество кадров в секунду
+fps = 2  # количество кадров в секунду
 sleep_time = round(1000/fps)
+
+map_file = 'map2.txt'
 
 
 class GameState(Enum):
@@ -64,7 +66,7 @@ class MainWindow:
 
         frame.grid(row=0, column=0, sticky=tkinter.NSEW)
 
-        self.field = Field('map1.txt')
+        self.field = Field(map_file)
 
         self.game_state = GameState.PLAY
         canvas.after(sleep_time, self.game_cycle)  # запуск цикла для обсчёта
@@ -81,7 +83,7 @@ class MainWindow:
 
     def fileOpen(self, *ignore):
         self.set_status('Open File!')
-
+        # FIXME: self.field = Field( файл )
 
     def fileSave(self, *ignore):
         self.set_status('Save File!')
@@ -111,7 +113,7 @@ class Field:
                     self.matrix[yi][xi] = 1 if (line[xi] == '1') else 0
                     self.avatars[yi][xi] = canvas.create_rectangle(xi*cell_width, yi*cell_height,
                                                                    (xi+1)*cell_width, (yi+1)*cell_height,
-                                                                   fill=color)
+                                                                   fill=color, outline='lightgray')
 
     def next_step(self):
         new_map = [[0]*cells_horizontal_number for i in range(cells_vertical_number)]
