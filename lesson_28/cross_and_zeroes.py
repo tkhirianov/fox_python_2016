@@ -1,3 +1,7 @@
+player_symbols = ['X', 'O']
+enemy = {'X': 'O', 'O': 'X'}
+
+
 class Field:
     def __init__(self):
         self.m = "."*9
@@ -6,7 +10,6 @@ class Field:
         return (self.m[0:3] + '\n' +
                 self.m[3:6] + '\n' +
                 self.m[6:9] + '\n')
-
 
     def check_win(self, symbol):
         win = False
@@ -31,12 +34,52 @@ class Field:
     def paint(self, choice, symbol):
         self.m = self.m[:choice] + symbol + self.m[choice+1:]
 
+    def unpaint(self, choice):
+        self.m = self.m[:choice] + '.' + self.m[choice+1:]
 
-def human_choice(field, symbol):
+
+    def cell_free(self, choice):
+        return self.m[choice] == '.'
+
+    def choice_score(self, choice, player):
+        self.paint(choice, player)
+        if self.check_win(player):
+            score = +1
+        elif self.game_over():
+            score = 0
+        else: # рекуррентный случай
+            worst_score = 10
+            for enemy_choice in range(9):
+                if self.cell_free(enemy_choice):
+                    choice_score = self.choice_score(enemy_choice, enemy[player])
+                    if choice_score < worst_score:
+                        worst_score = choice_score
+            score = -worst_score
+
+        self.unpaint(choice)
+        return score
+
+
+def human_choice(field, player):
     choice = int(input("Ваш ход [0-8]:"))
-    while field.m[choice] != ".":
+    while not field.cell_free(choice):
         choice = int(input("Клетка занята. Ваш ход [0-8]:"))
     return choice
+
+
+def ai_choice(field, player):
+    assert not field.game_over(), "Невозможно делать ход в состоянии конца игры!"
+
+    best_choice = None
+    worst_score = +10
+    for choice in range(9):
+        if field.cell_free(choice):
+            score = field.choice_score(choice, player)
+            print("DEBUG:", choice, score)
+            if score < worst_score:
+                worst_score = score
+                best_choice = choice
+    return best_choice
 
 
 def tournament():
@@ -48,7 +91,7 @@ def tournament():
         if field.game_over():
             break
         print(field)
-        choice = human_choice(field, "O")
+        choice = ai_choice(field, "O")
         field.paint(choice, "O")
 
     if field.check_win("X"):
