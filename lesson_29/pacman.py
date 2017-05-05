@@ -8,7 +8,7 @@ screen_width = cell_width*cells_horizontal_number
 screen_height = cell_height*cells_vertical_number
 sprite_number = 4
 
-fps = 60  # количество кадров в секунду
+fps = 20  # количество кадров в секунду
 sleep_time = round(1000/fps)
 
 map_file = 'map1.txt'
@@ -35,6 +35,10 @@ class MainWindow:
         canvas.grid(row=0, column=0, sticky=tkinter.NSEW)
 
         self.level = Level(map_file)
+        self.parent.bind('<Up>', self.level.up_event)
+        self.parent.bind('<Down>', self.level.down_event)
+        self.parent.bind('<Left>', self.level.left_event)
+        self.parent.bind('<Right>', self.level.right_event)
         canvas.after(sleep_time, self.level.game_cycle)  # запуск цикла для обсчёта
 
 
@@ -60,10 +64,9 @@ def screenify(xi, yi, xi_old=None, yi_old=None, sprite_i=0):
 
 class Unit:
     def __init__(self, xi, yi):
-        self.x = xi
-        self.y = yi
-        self.avatar = canvas.create_oval(*screenify(xi, yi),
-                                         fill='green', outline='black')
+        self.xi = xi
+        self.yi = yi
+        self.avatar = None
 
 
 class Pacman(Unit):
@@ -74,14 +77,20 @@ class Pacman(Unit):
         self.max_bombs_number = Pacman.default_bombs_number
         self.bombs_number = self.max_bombs_number
         self.sprite_i = 0
-        self.xi, self.yi = xi, yi
         self.xi_old, self.yi_old = self.xi, self.yi
+        self.avatar = canvas.create_oval(*screenify(xi, yi),
+                                         fill='green', outline='black')
+        self.dx = self.dy = 0
 
     def step(self):
-        self.sprite_i = (self.sprite_i + 1)%sprite_number
-        #canvas.itemconfigure(self.avatar, fill='green', outline='black')
+        if self.sprite_i == 0:
+            self.xi_old, self.yi_old = self.xi, self.yi
+            self.xi, self.yi = self.xi + self.dx, self.yi + self.dy
+
         x1, y1, x2, y2 = screenify(self.xi, self.yi, self.xi_old, self.yi_old, self.sprite_i)
+        #print('step:', x1, y1, x2, y2, self.sprite_i)
         canvas.coords(self.avatar, x1, y1, x2, y2)
+        self.sprite_i = (self.sprite_i + 1)%sprite_number
 
 
 class Level:
@@ -98,17 +107,14 @@ class Level:
                 for xi in range(cells_horizontal_number):
                     symbol = line[xi]
                     if Level.cell[symbol] == 'Pacman':
-                        self.player = Pacman(xi, yi)
+                        pacman_coords = xi, yi
                         symbol = ' '
                     self.field[yi][xi] = symbol
                     color = Level.cell[symbol]
                     self.avatars[yi][xi] = canvas.create_rectangle(*screenify(xi, yi),
                                                                    fill=color, outline='lightgray')
+            self.player = Pacman(*pacman_coords)
 
-        canvas.bind('<Up>', self.up_event)
-        canvas.bind('<Down>', self.down_event)
-        canvas.bind('<Left>', self.left_event)
-        canvas.bind('<Right>', self.right_event)
         self.game_state = GameState.PLAY
 
     def game_cycle(self, *ignore):
@@ -126,35 +132,37 @@ class Level:
 
     def up_event(self, event):
         """ принимает событие с клавиатуры и действует в соответствии с ним"""
+        print('up')
         player = self.player
-        if (player.yi == 0
-                or self.field[player.yi-1][player.xi].is_wall()):
-            return
-        player.dy = -1
+        if player.yi == 0 or self.field[player.yi-1][player.xi] == '#':
+            player.dx, player.dy = 0, 0
+        else:
+            player.dx, player.dy = 0, -1
 
     def down_event(self, event):
         """ принимает событие с клавиатуры и действует в соответствии с ним"""
+        print('down')
         player = self.player
-        if (player.yi == cells_vertical_number-1
-                or self.field[player.yi+1][player.xi].is_wall()):
-            return
-        player.dy = +1
+        if player.yi == cells_vertical_number-1 or self.field[player.yi+1][player.xi] == '#':
+            player.dx, player.dy = 0, 0
+        else:
+            player.dx, player.dy = 0, +1
 
     def left_event(self, event):
         """ принимает событие с клавиатуры и действует в соответствии с ним"""
         player = self.player
-        if (player.xi == 0
-                or self.field[player.yi][player.xi-1].is_wall()):
-            return
-        player.dx = -1
+        if player.xi == 0 or self.field[player.yi][player.xi-1] == '#':
+            player.dx, player.dy = 0, 0
+        else:
+            player.dx, player.dy = -1, 0
 
     def right_event(self, event):
         """ принимает событие с клавиатуры и действует в соответствии с ним"""
         player = self.player
-        if (player.xi == cells_horizontal_number-1
-                or self.field[player.yi][player.xi+1].is_wall()):
-            return
-        player.dx = +1
+        if player.xi == cells_horizontal_number-1 or self.field[player.yi][player.xi+1] == '#':
+            player.dx, player.dy = 0, 0
+        else:
+            player.dx, player.dy = +1, 0
 
 
 def main():

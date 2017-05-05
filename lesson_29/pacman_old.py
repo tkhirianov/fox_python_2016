@@ -123,7 +123,8 @@ def ai_choice(monster_x, monster_y, field, pacman):
         x, y = queue.pop(0)  # берём из очереди первую клетку
         # перебираем все четыре соседние клетки
         for neighbour_x, neighbour_y in (x-1, y), (x+1, y), (x, y-1), (x, y+1):
-            # если она не выходит за границу карты (1), не является стеной (2) и при этом ещё не достигнута заливкой (3)
+            # если она не выходит за границу карты (1), не является стеной (2)
+            # и при этом ещё не достигнута заливкой (3)
             if 0 <= neighbour_x < max_physical_x and 0 <= neighbour_y < max_physical_y and \
                     not level.field.cells[neighbour_y][neighbour_x].is_wall() and \
                     shortest_pathlen[neighbour_y][neighbour_x] == -1:
@@ -146,12 +147,6 @@ def ai_choice(monster_x, monster_y, field, pacman):
                 break
     path[:] = path[::-1]  # разворачиваю путь наоборот
 
-    # FIXME: debug printing
-    #for i in range(len(shortest_pathlen)):
-    #    print(*shortest_pathlen[i], sep='\t')
-    #print()
-    #print(*path)
-    #print()
     if len(path) == 1:
         return 0, 0  # вырожденный случай -- монстр на той же клетке, что и пакман
     else:
