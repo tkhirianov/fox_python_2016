@@ -37,16 +37,18 @@ class Field:
     def unpaint(self, choice):
         self.m = self.m[:choice] + '.' + self.m[choice+1:]
 
-
     def cell_free(self, choice):
         return self.m[choice] == '.'
 
     def choice_score(self, choice, player):
+        """ Считает выигрышноть позиции для противника игрока player,
+            которая возникает сразу после хода choice игрока player
+        """
         self.paint(choice, player)
         if self.check_win(player):
-            score = +1
+            score = -1  # противник проиграл таким ходом, значит позиция - проигрышная
         elif self.game_over():
-            score = 0
+            score = 0  # ничья
         else: # рекуррентный случай
             worst_score = 10
             for enemy_choice in range(9):
@@ -75,7 +77,6 @@ def ai_choice(field, player):
     for choice in range(9):
         if field.cell_free(choice):
             score = field.choice_score(choice, player)
-            print("DEBUG:", choice, score)
             if score < worst_score:
                 worst_score = score
                 best_choice = choice
@@ -94,6 +95,7 @@ def tournament():
         choice = ai_choice(field, "O")
         field.paint(choice, "O")
 
+    print(field)
     if field.check_win("X"):
         print("Крестики выиграли!")
     elif field.check_win("O"):
